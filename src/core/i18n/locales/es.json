@@ -1,0 +1,13 @@
+{
+  "system": {
+    "offline": "Sistema fuera de línea",
+    "no_profiles": "No se encontraron perfiles activos.",
+    "secure_routing": "Enrutamiento seguro activo",
+    "available_tooltip": "Disponible para proyectos y contratación",
+    "link_web": "Sitio Web Personal",
+    "link_cv": "Curriculum Vitae (PDF)",
+    "link_contact": "Contacto Directo",
+    "availability_note": "Disponible para consultorías, desarrollo de módulos Magento y arquitectura de proyectos PHP.",
+    "footer_rights": "Todos los derechos reservados."
+  }
+}

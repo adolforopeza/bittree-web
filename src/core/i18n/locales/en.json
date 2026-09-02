@@ -1,0 +1,13 @@
+{
+  "system": {
+    "offline": "System offline",
+    "no_profiles": "No active profiles found.",
+    "secure_routing": "Secure routing active",
+    "available_tooltip": "Available for projects and hiring",
+    "link_web": "Personal Website",
+    "link_cv": "Curriculum Vitae (PDF)",
+    "link_contact": "Direct Contact",
+    "availability_note": "Available for consulting, Magento module development, and PHP project architecture.",
+    "footer_rights": "All rights reserved."
+  }
+}
