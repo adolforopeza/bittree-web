@@ -1,0 +1,14 @@
+// modules/ExampleModule/manifest.json
+{
+  "name": "ExampleModule",
+  "version": "1.0.0",
+  "description": "Módulo de ejemplo para demostrar la estructura modular",
+  "enabled": true,
+  "routes": {
+    "mountPath": "/example",
+    "serverApi": "/api/modules/example"
+  },
+  "frontend": {
+    "entry": "frontend/page"
+  }
+}
