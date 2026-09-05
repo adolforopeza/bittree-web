@@ -1,10 +1,9 @@
 // src/core/seo/metadata.ts
 import type { Metadata } from 'next';
-import { ProfileRepository } from '@/core/database/profiles/repository';
+import { ProfileCache } from '@/core/cache/profile-cache';
 import type { Locale } from '@/core/i18n/config';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-const profilesResponse = await ProfileRepository.getProfiles();
 
 interface GenerateLocalizedMetadataProps {
     params: Promise<{
@@ -13,11 +12,12 @@ interface GenerateLocalizedMetadataProps {
 }
 
 /**
- * Genera metadatos avanzados para SEO y redes sociales desacoplados del layout principal[cite: 3, 4].
+ * Genera metadatos avanzados para SEO reutilizando el ProfileCache centralizado.
  */
-export function generateLocalizedMetadata(): Metadata {
-    const lang = 'es';
-    const profile = profilesResponse.success && profilesResponse.data ? profilesResponse.data.find((p) => p.is_active) || profilesResponse.data[0] : null;
+export async function generateLocalizedMetadata(props?: GenerateLocalizedMetadataProps): Promise<Metadata> {
+    const resolvedParams = props ? await props.params : undefined;
+    const lang = resolvedParams?.lang || 'es';
+    const profile = await ProfileCache.getActiveProfile();
 
     const title = profile ? `${profile.full_name} (@${profile.username}) | Bittree` : 'Bittree';
     const description = profile?.headline || profile?.bio || 'Plataforma descentralizada de gestión de perfiles, enlaces e identidades digitales con alto rendimiento.';

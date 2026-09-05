@@ -1,11 +1,12 @@
 // src/app/[lang]/page.tsx
+import { ProfileCache } from '@/core/cache/profile-cache';
 import { ProfileRepository } from '@/core/database/profiles/repository';
+import type { ProfileLink } from '@/core/database/profiles/types';
+import type { Locale } from '@/core/i18n/config';
 import { getDictionary } from '@/core/i18n/dictionaries';
 import { FrontendLayout } from '@/modules/frontend/components/FrontendLayout';
 import { ProfileHeader } from '@/modules/frontend/components/ProfileHeader';
 import { LinkCard } from '@/modules/frontend/components/LinkCard';
-import type { Locale } from '@/core/i18n/config';
-import type { ProfileLink } from '@/core/database/profiles/types';
 
 interface HomePageProps {
     params: Promise<{
@@ -14,18 +15,16 @@ interface HomePageProps {
 }
 
 /**
- * Página principal localizada que utiliza el username de las variables de entorno y los enlaces embebidos del perfil.
+ * Página principal localizada que consume directamente el ProfileCache centralizado,
+ * evitando llamadas duplicadas y unificando el ciclo de vida de la petición.
  */
 export default async function LocalizedHomePage({ params }: HomePageProps) {
     const { lang } = await params;
     const dict = await getDictionary(lang);
 
-    const targetUsername = process.env.USER_NAME || '';
+    const cachedProfile = await ProfileCache.getActiveProfile();
 
-    // @ts-ignore
-    const resolvedResponse = await ProfileRepository.getResolvedProfileByUsername(targetUsername, lang);
-
-    if (!resolvedResponse.success || !resolvedResponse.data) {
+    if (!cachedProfile) {
         return (
             <FrontendLayout lang={lang}>
                 <div className="text-center py-20 font-mono text-xs">
@@ -36,11 +35,8 @@ export default async function LocalizedHomePage({ params }: HomePageProps) {
         );
     }
 
-    const profile = resolvedResponse.data;
+    const profile = ProfileRepository.resolveProfileLocale(cachedProfile, lang);
 
-    /**
-     * Extrae y filtra los enlaces directamente desde la relación embebida en el perfil optimizando consultas de base de datos.
-     */
     const links: ProfileLink[] = (profile.links || [])
         .sort((a, b) => a.position - b.position);
 
@@ -54,13 +50,16 @@ export default async function LocalizedHomePage({ params }: HomePageProps) {
             <nav className="w-full space-y-4" aria-label={`Enlaces principales de ${profile.full_name}`}>
                 {links.map((link: ProfileLink) => {
                     const langKey = lang as string;
-                    const linkLangMap = link.link_json.lang as unknown as Record<string, { title: string; subtitle?: string; badge?: string }>;
+                    const linkLangMap = link.link_json.lang as unknown as Record<string, {
+                        title: string;
+                        subtitle?: string;
+                        badge?: string
+                    }>;
                     const localizedLang = linkLangMap?.[langKey] || linkLangMap?.['es'] || (linkLangMap ? Object.values(linkLangMap)[0] : undefined);
                     const url = typeof link.link_json.url === 'string' ? link.link_json.url : '#';
                     const title = localizedLang?.title || 'Enlace';
                     const variants = link.link_json.variants as any;
 
-                    // @ts-ignore
                     return (
                         <LinkCard
                             key={link.entity_id}
