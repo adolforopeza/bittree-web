@@ -1,0 +1,13 @@
+{
+  "script-src": ["'self'"],
+  "style-src": ["'self'", "https://fonts.googleapis.com", "'unsafe-inline'"],
+  "img-src": ["'self'", "data:", "https:"] ,
+  "connect-src": ["'self'", "https://*.supabase.co"],
+  "font-src": ["'self'", "https://fonts.gstatic.com"],
+  "default-src": ["'none'"],
+  "frame-ancestors": ["'none'"],
+  "object-src": ["'none'"],
+  "base-uri": ["'self'"],
+  "form-action": ["'self'"],
+  "upgrade-insecure-requests": true
+}
