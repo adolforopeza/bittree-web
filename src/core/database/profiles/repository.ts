@@ -1,121 +1,88 @@
 // src/core/database/profiles/repository.ts
 import { createServerClient } from '@/core/database/supabase-client';
-import type {
-    Profile,
-    ResolvedProfile,
-    SetProfileParams,
-    DeleteProfileParams,
-    ProfileDatabaseResponse,
-} from '@/core/database/profiles/types';
+import type { Profile, ResolvedProfile } from './types';
+import type { Locale } from '@/core/i18n/config';
+
+export type ProfileRepositoryResponse<T> = {
+    success: boolean;
+    data?: T;
+    error?: string;
+};
 
 /**
- * Repositorio de persistencia, procesamiento i18n y consultas RPC optimizadas para la entidad Profile.
+ * Repositorio centralizado para la gestión de perfiles e identidades digitales,
+ * utilizando estrictamente las funciones RPC oficiales de Supabase (get_profile, set_profile, delete_profile)
+ * y enrutando automáticamente entre HTTP GET (para lectura con prefijo get_) y POST (para mutaciones).
  */
 export class ProfileRepository {
-    /**
-     * Preprocesa un perfil crudo de base de datos resolviendo los campos localizados según el idioma indicado.
-     */
-    public static resolveProfileLocale(profile: Profile, locale: string = 'es'): ResolvedProfile {
-        const profileData = profile.profile_data_json || {};
-        const langMap = profileData.lang || {};
-        const localized = langMap[locale] || langMap['es'] || Object.values(langMap)[0];
+    private static async executeRpc<T>(
+        functionName: string,
+        params?: Record<string, any>
+    ): Promise<ProfileRepositoryResponse<T>> {
+        try {
+            const supabase = await createServerClient();
+            const isGet = functionName.startsWith('get_');
+            const options = isGet ? { get: true } : {};
+
+            const { data, error } = await supabase.rpc(functionName, params || {}, options);
+            if (error) {
+                return { success: false, error: error.message };
+            }
+
+            return { success: true, data: data as T };
+        } catch (err: any) {
+            return { success: false, error: err?.message || 'Error desconocido en repositorio' };
+        }
+    }
+
+    public static async getProfiles(username?: string): Promise<ProfileRepositoryResponse<Profile[]>> {
+        const payload = username ? { user_name: username } : {};
+        const response = await this.executeRpc<Profile | Profile[] | null>('get_profile', payload);
+
+        if (!response.success) {
+            return { success: false, error: response.error };
+        }
+
+        let profiles: Profile[] = [];
+        if (response.data) {
+            profiles = Array.isArray(response.data) ? response.data : [response.data];
+        }
+
+        return { success: true, data: profiles };
+    }
+
+    public static async getResolvedProfileByUsername(username: string, lang: Locale): Promise<ResolvedProfile | null> {
+        const response = await this.getProfiles(username);
+        if (!response.success || !response.data || response.data.length === 0) {
+            return null;
+        }
+        return this.resolveProfileLocale(response.data[0], lang);
+    }
+
+    public static async setProfile(profileData: Partial<Profile>): Promise<ProfileRepositoryResponse<Profile>> {
+        return this.executeRpc<Profile>('set_profile', { p_profile: profileData });
+    }
+
+    public static async deleteProfile(profileId: string): Promise<ProfileRepositoryResponse<boolean>> {
+        const response = await this.executeRpc<any>('delete_profile', { p_id: profileId });
+        if (!response.success) {
+            return { success: false, error: response.error };
+        }
+        return { success: true, data: true };
+    }
+
+    public static resolveProfileLocale(profile: Profile, lang: Locale): ResolvedProfile {
+        if (!profile) return profile as unknown as ResolvedProfile;
+        const bioData = (profile as any).bio_json;
+        const localizedBio = bioData?.[lang] || bioData?.['es'] || profile.bio;
 
         return {
             ...profile,
-            current_locale: locale,
-            resolved_title: localized?.title || profile.full_name,
-            resolved_description: localized?.description || profile.bio || '',
-            resolved_keywords: profileData.keywords || [],
+            bio: typeof localizedBio === 'string' ? localizedBio : profile.bio,
+            current_locale: lang,
+            resolved_title: profile.full_name,
+            resolved_description: profile.headline || profile.bio || '',
+            resolved_keywords: ['portfolio', profile.username],
         };
-    }
-
-    /**
-     * Obtiene una lista de perfiles filtrada por user_name opcional mediante la función RPC 'get_profile'.
-     */
-    public static async getProfiles(user_name?: string): Promise<ProfileDatabaseResponse<Profile[]>> {
-        try {
-            const client = await createServerClient();
-            const { data, error } = await client.rpc('get_profile', {
-                ...(user_name ? { user_name } : {})
-            });
-
-            if (error) {
-                return { data: null, error: error.message, success: false };
-            }
-
-            return { data: data as Profile[], error: null, success: true };
-        } catch (err: unknown) {
-            const message = err instanceof Error ? err.message : 'Unknown database error occurred';
-            return { data: null, error: message, success: false };
-        }
-    }
-
-    /**
-     * Obtiene un perfil específico optimizado mediante user_name obligatorio y adaptado al idioma requerido.
-     */
-    public static async getResolvedProfileByUsername(user_name: string, locale: string = 'es'): Promise<ProfileDatabaseResponse<ResolvedProfile>> {
-        if (!user_name || user_name.trim() === '') {
-            return { data: null, error: 'Username is required', success: false };
-        }
-
-        try {
-            const client = await createServerClient();
-            const { data, error } = await client.rpc('get_profile', { user_name });
-
-            if (error) {
-                return { data: null, error: error.message, success: false };
-            }
-
-            const profiles = (data as Profile[]) || [];
-            const target = profiles[0];
-
-            if (!target) {
-                return { data: null, error: 'Profile not found', success: false };
-            }
-
-            const resolved = this.resolveProfileLocale(target, locale);
-            return { data: resolved, error: null, success: true };
-        } catch (err: unknown) {
-            const message = err instanceof Error ? err.message : 'Unknown database error occurred';
-            return { data: null, error: message, success: false };
-        }
-    }
-
-    /**
-     * Inserta o actualiza un perfil mediante la función RPC 'set_profile'.
-     */
-    public static async setProfile(params: SetProfileParams): Promise<ProfileDatabaseResponse<unknown>> {
-        try {
-            const client = await createServerClient();
-            const { data, error } = await client.rpc('set_profile', params);
-
-            if (error) {
-                return { data: null, error: error.message, success: false };
-            }
-
-            return { data, error: null, success: true };
-        } catch (err: unknown) {
-            const message = err instanceof Error ? err.message : 'Unknown database error occurred';
-            return { data: null, error: message, success: false };
-        }
-    }
-
-    /**
-     * Elimina un perfil específico mediante la función RPC 'delete_profile'.
-     */
-    public static async deleteProfile(params: DeleteProfileParams): Promise<ProfileDatabaseResponse<unknown>> {
-        try {
-            const client = await createServerClient();
-            const { data, error } = await client.rpc('delete_profile', params);
-
-            if (error) {
-                return { data: null, error: error.message, success: false };
-            }
-
-            return { data, error: null, success: true };
-        } catch (err: unknown) {
-            const message = err instanceof Error ? err.message : 'Unknown database error occurred';
-            return { data: null, error: message, success: false };
-        }
     }
 }

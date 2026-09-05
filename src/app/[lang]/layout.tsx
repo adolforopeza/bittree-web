@@ -38,7 +38,7 @@ export default async function RootLayout(props: any) {
                 referrerPolicy="no-referrer"
             />
         </head>
-        <body className="bg-black text-neutral-200 min-h-screen flex flex-col font-sans antialiased">
+        <body suppressHydrationWarning className="bg-black text-neutral-200 min-h-screen flex flex-col font-sans antialiased">
         <FrontendLayout lang={lang}>
             <LanguageSelector currentLang={lang} />
             {children}

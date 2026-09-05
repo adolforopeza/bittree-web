@@ -2,7 +2,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
-// @ts-ignore
 import { env } from '@/core/config/env';
 import { i18n } from '@/core/i18n/config';
 

@@ -1,7 +1,5 @@
 // src/core/database/supabase-client.ts
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { createServerClient as createSsrServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
 import { env } from '@/core/config/env';
 
 /**
@@ -16,7 +14,7 @@ export const getSupabaseBrowserClient = (): SupabaseClient<any, any, any> => {
         if (!browserClient) {
             browserClient = createClient(env.supabaseUrl, env.supabaseAnonKey, {
                 db: {
-                    schema: env.supabaseSchema,
+                    schema: process.env.NEXT_PUBLIC_SUPABASE_SCHEMA || 'public',
                 },
                 auth: {
                     persistSession: true,
@@ -32,35 +30,27 @@ export const getSupabaseBrowserClient = (): SupabaseClient<any, any, any> => {
 };
 
 /**
- * Fábrica de cliente Supabase para Server Components, Server Actions y Rutas API.
+ * Cliente de servidor Supabase utilizando Service Role y esquema configurado en NEXT_PUBLIC_SUPABASE_SCHEMA[cite: 22].
  */
-// @ts-ignore
 export const createServerClient = async (): Promise<SupabaseClient<any, any, any>> => {
     try {
-        const cookieStore = await cookies();
+        if (typeof window !== 'undefined') {
+            throw new Error('[CRITICAL_SECURITY] createServerClient must not be called in the browser.');
+        }
+        const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+        const supabaseSchema = process.env.NEXT_PUBLIC_SUPABASE_SCHEMA || 'public';
 
-        const client = createSsrServerClient(env.supabaseUrl, env.supabaseAnonKey, {
-            db: {
-                schema: env.supabaseSchema,
-            },
-            cookies: {
-                getAll() {
-                    try {
-                        return cookieStore.getAll();
-                    } catch {
-                        return [];
-                    }
-                },
-                setAll(cookiesToSet) {
-                    try {
-                        cookiesToSet.forEach(({ name, value, options }) => {
-                            cookieStore.set(name, value, options);
-                        });
-                    } catch {}
-                },
-            },
+        if (!serviceRoleKey || !supabaseUrl) {
+            throw new Error('[CRITICAL_SECURITY] SUPABASE_SERVICE_ROLE_KEY o NEXT_PUBLIC_SUPABASE_URL no están configuradas.');
+        }
+
+        const client = createClient(supabaseUrl, serviceRoleKey, {
+            db: { schema: supabaseSchema },
+            auth: { persistSession: false, autoRefreshToken: false },
         });
-        return client as any;
+
+        return client;
     } catch {
         return {} as any;
     }
@@ -68,12 +58,12 @@ export const createServerClient = async (): Promise<SupabaseClient<any, any, any
 
 /**
  * Cliente Supabase con privilegios elevados (Service Role) estrictamente para backend.
- * Falla de forma intencional si no detecta la clave de servicio para evitar caídas silenciosas de seguridad.
  */
 // @ts-ignore
 export const createAdminClient = (): SupabaseClient<any, any, any> => {
     try {
         const serviceRoleKey = env.supabaseServiceRoleKey;
+        const supabaseSchema = process.env.NEXT_PUBLIC_SUPABASE_SCHEMA || 'public';
 
         if (!serviceRoleKey) {
             throw new Error('[CRITICAL_SECURITY] SUPABASE_SERVICE_ROLE_KEY no está configurada en las variables de entorno.');
@@ -81,7 +71,7 @@ export const createAdminClient = (): SupabaseClient<any, any, any> => {
 
         const client = createClient(env.supabaseUrl, serviceRoleKey, {
             db: {
-                schema: env.supabaseSchema,
+                schema: supabaseSchema,
             },
             auth: {
                 persistSession: false,

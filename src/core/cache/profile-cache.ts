@@ -11,11 +11,11 @@ export class ProfileCache {
     private static readonly CACHE_KEY = 'profile-active-entity';
 
     /**
-     * Obtiene el perfil activo de forma centralizada y cacheada para ser reutilizado
-     * tanto en la generación dinámica de metadatos (SEO) como en la renderización de la página (SSR).
+     * Función interna real que ejecuta la consulta a la base de datos,
+     * envuelta de manera segura por el mecanismo de caché por request de React.
      */
-    public static getActiveProfile = CoreCache.remember(
-        this.CACHE_KEY,
+    private static fetchActiveProfile = CoreCache.remember(
+        'profile-active-entity-fetcher',
         async (): Promise<Profile | null> => {
             const targetUsername = process.env.USER_NAME || '';
 
@@ -34,6 +34,14 @@ export class ProfileCache {
             return null;
         }
     );
+
+    /**
+     * Obtiene el perfil activo de forma centralizada y cacheada para ser reutilizado
+     * tanto en la generación dinámica de metadatos (SEO) como en la renderización de la página (SSR).
+     */
+    public static async getActiveProfile(): Promise<Profile | null> {
+        return await ProfileCache.fetchActiveProfile();
+    }
 
     /**
      * Invalida, limpia y refresca el caché del perfil tras actualizaciones o mutaciones críticas.
