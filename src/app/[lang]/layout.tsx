@@ -1,7 +1,7 @@
 // src/app/[lang]/layout.tsx
-import { FrontendLayout } from '@/modules/frontend/components/FrontendLayout';
-import { LanguageSelector } from '@/modules/frontend/components/LanguageSelector';
-import { Footer } from '@/modules/frontend/components/Footer';
+import FrontendLayout from '../../../modules/frontend/frontend/components/FrontendLayout';
+import LanguageSelector from '../../../modules/frontend/frontend/components/LanguageSelector';
+import Footer from '../../../modules/frontend/frontend/components/Footer';
 import { generateLocalizedMetadata } from '@/core/seo/metadata';
 import { i18n, type Locale } from '@/core/i18n/config';
 import { getDictionary } from '@/core/i18n/dictionaries';

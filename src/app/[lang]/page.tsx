@@ -4,9 +4,9 @@ import { ProfileRepository } from '@/core/database/profiles/repository';
 import type { ProfileLink } from '@/core/database/profiles/types';
 import type { Locale } from '@/core/i18n/config';
 import { getDictionary } from '@/core/i18n/dictionaries';
-import { FrontendLayout } from '@/modules/frontend/components/FrontendLayout';
-import { ProfileHeader } from '@/modules/frontend/components/ProfileHeader';
-import { LinkCard } from '@/modules/frontend/components/LinkCard';
+import FrontendLayout from '../../../modules/frontend/frontend/components/FrontendLayout';
+import ProfileHeader from '../../../modules/frontend/frontend/components/ProfileHeader';
+import { LinkCard } from '../../../modules/frontend/frontend/components/LinkCard';
 
 interface HomePageProps {
     params: Promise<{
