@@ -6,8 +6,10 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "prebuild": "node ./scripts/generate-routers.js",
     "start": "next start",
-    "lint": "next lint ."
+    "lint": "next lint .",
+    "generate:routers": "node ./scripts/generate-routers.js"
   },
   "keywords": [],
   "author": "",

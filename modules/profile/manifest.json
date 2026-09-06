@@ -1,0 +1,17 @@
+{
+  "name": "Profile",
+  "version": "1.0.0",
+  "description": "Módulo de perfiles: perfiles y enlaces (moved from core database)",
+  "enabled": true,
+  "routes": {
+    "mountPath": "/:username",
+    "serverApi": "/api/modules/profile"
+  },
+  "admin": {
+    "mountPath": "/admin/profile",
+    "menu": { "group": "content", "label": "Profiles" }
+  },
+  "frontend": {
+    "entry": "frontend/page"
+  }
+}
