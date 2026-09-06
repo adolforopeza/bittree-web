@@ -1,0 +1,13 @@
+{
+  "name": "FrontendModule",
+  "version": "1.0.0",
+  "description": "Módulo frontend con componentes UI reutilizables",
+  "enabled": true,
+  "routes": {
+    "mountPath": "/",
+    "serverApi": "/api/modules/frontend"
+  },
+  "frontend": {
+    "entry": "frontend/page"
+  }
+}
