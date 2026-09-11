@@ -1,0 +1,24 @@
+/* src/app/[lang]/globals.css */
+@import "tailwindcss";
+
+* {
+    border-radius: 0 !important;
+}
+
+.profile-avatar, .user-status {
+    border-radius: 50% !important;
+}
+
+body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
