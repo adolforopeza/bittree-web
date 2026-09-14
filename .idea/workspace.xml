@@ -5,8 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="6cdb12bb-7e5a-414a-81f5-725ee0eed6b6" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/src/core/schema.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/core/schema.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/core/seo.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/core/seo.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
